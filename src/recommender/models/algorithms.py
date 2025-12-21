@@ -18,7 +18,7 @@ def cf_user_based(trainset, testset):
 
 def cf_svd(trainset, testset):      
     #SVD approach
-    algo_svd = SVD()
+    algo_svd = SVD(random_state = 42)
     algo_svd.fit(trainset)
     pred_svd = algo_svd.test(testset)
-    return pred_svd, algo_svd
+    return pred_svd, algo_svd, algo_svd

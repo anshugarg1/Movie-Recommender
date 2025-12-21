@@ -8,11 +8,11 @@ from recommender.recommender.service import Recommender_Service
 
 
 @st.cache_data
-def get_raw_data():
+def get_raw_data(_obj_load_data: Load_Data):
     """Load movies and ratings once and cache them."""
-    obj_load_data = Load_Data(MOVIES_PATH, RATINGS_PATH, TAGS_PATH, LINKS_PATH)
-    movies_df = obj_load_data.load_movie()
-    ratings_df = obj_load_data.load_rating()
+    # obj_load_data = Load_Data(MOVIES_PATH, RATINGS_PATH, TAGS_PATH, LINKS_PATH)
+    movies_df = _obj_load_data.load_movie()
+    ratings_df = _obj_load_data.load_rating()
     return movies_df, ratings_df
 
 @st.cache_resource
@@ -21,10 +21,10 @@ def get_service():
     Create and cache the RecommenderService.
     This ensures the model is loaded only once per session.
     """
-    movies_df, ratings_df = get_raw_data()
+    obj_load_data = Load_Data(MOVIES_PATH, RATINGS_PATH, TAGS_PATH, LINKS_PATH)
+    movies_df, ratings_df = get_raw_data(obj_load_data)
     obj_model_store = Model_Store(SVD_MODEL_PATH)
     algo = obj_model_store.load_model()
-    obj_load_data = Load_Data(MOVIES_PATH, RATINGS_PATH, TAGS_PATH, LINKS_PATH)
     rating_trainset, rating_testset = obj_load_data.load_rating_dataset()
 
     service = Recommender_Service(
@@ -65,7 +65,7 @@ def run_app():
 
         recs_df = pd.DataFrame(recs)
         st.subheader("Recommended movies")
-        st.dataframe(recs_df[["title", "movieId", "pred_rating"]])
+        st.dataframe(recs_df[["title", "genre", "pred_rating"]])
 
 
 if __name__ == "__main__":

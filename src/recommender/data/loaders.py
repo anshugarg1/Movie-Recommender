@@ -38,7 +38,6 @@ class Load_Data:
         reader = Reader(rating_scale=(1,5))
         data = Dataset.load_from_df(self.load_rating()[['userId','movieId','rating']], reader)
         trainset, testset = train_test_split(data, test_size=0.25)
-        print(type(trainset))
         return trainset, testset
 
 
