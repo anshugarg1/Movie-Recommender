@@ -24,7 +24,8 @@ def get_service():
     movies_df, ratings_df = get_raw_data()
     obj_model_store = Model_Store(SVD_MODEL_PATH)
     algo = obj_model_store.load_model()
-    rating_trainset = Load_Data.load_rating_dataset()
+    obj_load_data = Load_Data(MOVIES_PATH, RATINGS_PATH, TAGS_PATH, LINKS_PATH)
+    rating_trainset, rating_testset = obj_load_data.load_rating_dataset()
 
     service = Recommender_Service(
         algo=algo,
@@ -49,14 +50,14 @@ def run_app():
     )
 
     n_recs = st.sidebar.slider("Number of recommendations", min_value=5, max_value=30, value=10)
-
+    print(n_recs)
     st.write(
         f"Showing top **{n_recs}** recommendations for user **{selected_user}** "
         "(based on SVD model)."
     )
 
     if st.button("Get Recommendations"):
-        recs = service.recommend_top_n_movie_for_user(algo, movies_df, selected_user, n=n_recs)
+        recs = service.recommend_top_n_movie_for_user(user_id=selected_user, n=n_recs)
 
         if not recs:
             st.warning("No recommendations available for this user (maybe unknown user).")
@@ -64,7 +65,7 @@ def run_app():
 
         recs_df = pd.DataFrame(recs)
         st.subheader("Recommended movies")
-        st.dataframe(recs_df[["title", "genres", "predicted_rating"]])
+        st.dataframe(recs_df[["title", "movieId", "pred_rating"]])
 
 
 if __name__ == "__main__":

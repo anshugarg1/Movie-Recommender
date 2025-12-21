@@ -22,12 +22,12 @@ class Load_Data:
     def load_rating(self):
         rating_data = pd.read_csv(self.rating_path)
         print(rating_data[:4])
-        return rating_data,
+        return rating_data
     
     def load_tag(self):
         tag_data = pd.read_csv()
         print(tag_data[:4])
-        return tag_data,
+        return tag_data
 
     def load_link(self):
         link_data = pd.read_csv()
@@ -36,7 +36,7 @@ class Load_Data:
 
     def load_rating_dataset(self):
         reader = Reader(rating_scale=(1,5))
-        data = Dataset.load_from_df(self.rating_data[['userId','movieId','rating']], reader)
+        data = Dataset.load_from_df(self.load_rating()[['userId','movieId','rating']], reader)
         trainset, testset = train_test_split(data, test_size=0.25)
         print(type(trainset))
         return trainset, testset

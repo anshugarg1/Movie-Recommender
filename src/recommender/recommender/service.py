@@ -7,9 +7,11 @@ class Recommender_Service:
         self.movies_df = movies_df
 
     def recommend_top_n_movie_for_user(self, user_id: int, n: int = 10) -> list[dict]:
+        
         return get_top_n_for_user(
             algo= self.algo, 
             trainset= self.trainset,
+            
             movies_df= self.movies_df, 
             raw_user_id= user_id, 
             n= n)
