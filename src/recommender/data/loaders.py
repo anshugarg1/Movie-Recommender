@@ -40,9 +40,10 @@ class Load_Data:
         trainset, testset = train_test_split(data, test_size=0.25)
         return trainset, testset
 
-
     # def create_anti_test_set(self, trainset):
     #     anti_testset = trainset.build_anti_testset()
     #     # print(anti_testset)
     #     return anti_testset
+    
+
 
