@@ -1,31 +1,35 @@
-from src.recommender.data.loaders import load_dataset, load_data, create_anti_test_set
-from src.recommender.models.algorithms import cf_item_based, cf_user_based, cf_svd
-from src.recommender.evaluation.metrics import eval_res, precision_at_k
-from src.recommender.recommender.top_n_recomm import get_top_n_for_user
+from recommender.config import LINKS_PATH, MOVIES_PATH, RATINGS_PATH, SVD_MODEL_PATH, TAGS_PATH
+from recommender.data.loaders import Load_Data
+from recommender.models.training import load_svd_from_disk, train_and_save_svd
+from recommender.recommender.service import Recommender_Service
+
 
 def main():
-    print("Hello from recommender-system!")
-    movie_data, rating_data, tag_data, link_data = load_data()
-    trainset, testset = load_dataset(rating_data)
-    # pred_user = cf_user_based(trainset, testset)
-    # pred_item = cf_item_based(trainset, testset)
-    pred_svd, algo_svd = cf_svd(trainset, testset)
+    loader = Load_Data(MOVIES_PATH, RATINGS_PATH, TAGS_PATH, LINKS_PATH)
+    movies_df, ratings_df, _, _ = loader.load_all_data()
+    trainset, _ = loader.load_rating_dataset()
 
-    # eval_res(pred_user, pred_item, pred_svd)
+    if not SVD_MODEL_PATH.exists():
+        print("Model not found. Training a new SVD model...")
+        train_and_save_svd(use_full_trainset=True)
 
-    # print("CR used based Precision@K: ", precision_at_k(pred_user, k=10))
-    # print("CR item based Precision@K: ", precision_at_k(pred_item, k=10))
-    # print("SVD Precision@K: ", precision_at_k(pred_svd, k=10))
+    algo = load_svd_from_disk()
+    service = Recommender_Service(
+        algo=algo, trainset=trainset, movies_df=movies_df, ratings_df=ratings_df
+    )
 
-    # Simple CLI: ask for a user id
-    user_id = int(input("Enter a userId (e.g. 1–610 from ratings.csv): "))
-    
-    # create_anti_test_set(trainset)
-    top_n = get_top_n_for_user(algo_svd, trainset, movie_data, user_id, n=10)
-    
-    print(f"\nTop 10 recommendations for user {user_id}:\n")
-    for i, rec in enumerate(top_n, start=1):
-        print(f"{i}. {rec['title']}  (movieId={rec['movieId']}, predicted rating={rec['pred_rating']})")
+    user_id = int(input("Enter a userId from ratings.csv: "))
+    recs = service.recommend_top_n_movie_for_user(user_id=user_id, n=10)
+
+    if not recs:
+        recs = service.cold_start_recommendations(n=10)
+        print("No personalized recommendations. Showing cold-start results.")
+
+    print(f"\nTop recommendations for user {user_id}:\n")
+    for i, rec in enumerate(recs, start=1):
+        print(
+            f"{i}. {rec['title']} (movieId={rec['movieId']}, predicted rating={rec['predicted_rating']})"
+        )
 
 
 if __name__ == "__main__":
