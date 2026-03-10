@@ -12,3 +12,7 @@ wheels/
 .data
 # Virtual environments
 .venv
+
+# Local dataset/model artifacts
+data/ml-latest-small/ml-latest-small/*.csv
+data/models/*.dump
