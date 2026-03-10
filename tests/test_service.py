@@ -58,7 +58,9 @@ def test_filter_recommendations_by_genre_and_year():
 
 def test_cold_start_recommendations_schema():
     service = _service()
-    recs = service.cold_start_recommendations(n=2, include_genres=["Drama"], year_range=(2000, 2020))
+    recs = service.cold_start_recommendations(
+        n=2, include_genres=["Drama"], year_range=(2000, 2020)
+    )
 
     assert len(recs) <= 2
     for rec in recs:

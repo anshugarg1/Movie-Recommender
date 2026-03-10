@@ -36,9 +36,7 @@ class Load_Data:
         reader = Reader(rating_scale=(1, 5))
         ratings = self.load_rating()[["userId", "movieId", "rating"]]
         data = Dataset.load_from_df(ratings, reader)
-        trainset, testset = train_test_split(
-            data, test_size=test_size, random_state=random_state
-        )
+        trainset, testset = train_test_split(data, test_size=test_size, random_state=random_state)
         return trainset, testset
 
     def load_full_trainset(self):
@@ -46,4 +44,3 @@ class Load_Data:
         ratings = self.load_rating()[["userId", "movieId", "rating"]]
         data = Dataset.load_from_df(ratings, reader)
         return data.build_full_trainset()
-

@@ -52,7 +52,9 @@ def test_loader_builds_rating_split(tmp_path):
 
     dummy.to_csv(movies_path, index=False)
     ratings.to_csv(ratings_path, index=False)
-    pd.DataFrame({"userId": [], "movieId": [], "tag": [], "timestamp": []}).to_csv(tags_path, index=False)
+    pd.DataFrame({"userId": [], "movieId": [], "tag": [], "timestamp": []}).to_csv(
+        tags_path, index=False
+    )
     pd.DataFrame({"movieId": [], "imdbId": [], "tmdbId": []}).to_csv(links_path, index=False)
 
     loader = Load_Data(movies_path, ratings_path, tags_path, links_path)

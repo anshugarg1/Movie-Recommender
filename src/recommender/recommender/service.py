@@ -96,7 +96,10 @@ class Recommender_Service:
         return filtered
 
     def cold_start_recommendations(
-        self, n: int = 10, include_genres: list[str] | None = None, year_range: tuple[int, int] | None = None
+        self,
+        n: int = 10,
+        include_genres: list[str] | None = None,
+        year_range: tuple[int, int] | None = None,
     ) -> List[Dict]:
         include_genres = include_genres or []
         if year_range is None:

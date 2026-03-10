@@ -4,7 +4,8 @@ from surprise import dump
 MODEL_DIR = Path("data/models")
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-MODEL_PATH = MODEL_DIR/"svd_model.dump"
+MODEL_PATH = MODEL_DIR / "svd_model.dump"
+
 
 class Model_Store:
     def __init__(self, model_path: Path):

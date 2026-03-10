@@ -71,9 +71,7 @@ def run_app():
         "Release year range", min_value=min_year, max_value=max_year, value=(min_year, max_year)
     )
 
-    st.write(
-        f"Showing up to **{n_recs}** recommendations for user **{selected_user}**."
-    )
+    st.write(f"Showing up to **{n_recs}** recommendations for user **{selected_user}**.")
 
     user_rated = service.get_user_rated_movies(selected_user)
     genre_profile = {}
