@@ -1,38 +1,31 @@
-from .top_n_recomm import get_top_n_for_user
 from collections import defaultdict
-from typing import List, Dict
+from typing import Dict, List
+
+from .top_n_recomm import get_top_n_for_user
 
 
 class Recommender_Service:
-    def __init__(self, algo, trainset, movies_df):
+    def __init__(self, algo, trainset, movies_df, ratings_df):
         self.algo = algo
         self.trainset = trainset
         self.movies_df = movies_df
+        self.ratings_df = ratings_df
 
     def recommend_top_n_movie_for_user(self, user_id: int, n: int = 10) -> list[dict]:
-        
         return get_top_n_for_user(
-            algo= self.algo, 
-            trainset= self.trainset,
-            
-            movies_df= self.movies_df, 
-            raw_user_id= user_id, 
-            n= n)
-
+            algo=self.algo,
+            trainset=self.trainset,
+            movies_df=self.movies_df,
+            raw_user_id=user_id,
+            n=n,
+        )
 
     def get_user_rated_movies(self, user_id: int) -> list[dict]:
-        """
-        Return movies the user has already rated, with their ratings.
-        Result is a list of dicts sorted by rating (desc).
-        """
-        # user_id is the raw userId from ratings.csv
         try:
             inner_uid = self.trainset.to_inner_uid(user_id)
         except ValueError:
-            # user not present in the training data
             return []
 
-        # self.trainset.ur[inner_uid] -> list of (inner_iid, rating)
         rated_items = self.trainset.ur[inner_uid]
 
         results: list[dict] = []
@@ -56,93 +49,119 @@ class Recommender_Service:
                 }
             )
 
-        # Sort by rating descending (highest rated first)
         results.sort(key=lambda x: x["rating"], reverse=True)
         return results
 
-
     def compute_genre_profile(self, user_rated: List[Dict], top_k: int) -> Dict[str, float]:
-        """
-        Given the list returned by get_user_rated_movies(user_id),
-        compute a genre preference profile from the top_k movies.
-
-        Returns a dict: {genre: score}, where score is roughly the
-        sum of ratings for that genre (higher = more preferred).
-        """
         genre_scores: dict[str, float] = defaultdict(float)
+        for movie in user_rated[:top_k]:
+            rating = float(movie.get("rating", 0.0))
+            genres = [g.strip() for g in movie.get("genres", "").split("|") if g.strip()]
+            for genre in genres:
+                genre_scores[genre] += rating
 
-        # Use only the top_k highest rated movies
-        top_movies = user_rated[:top_k]
-
-        for movie in top_movies:
-            rating = movie.get("rating", 0.0)
-            genres_str = movie.get("genres", "")
-
-            if not genres_str:
-                continue
-
-            # MovieLens genres are separated by "|"
-            genres = [g.strip() for g in genres_str.split("|") if g.strip()]
-
-            # Weight each genre by the rating
-            for g in genres:
-                genre_scores[g] += float(rating)
-
-        # Sort by score (descending) and return a normal dict
-        sorted_genres = dict(
-            sorted(genre_scores.items(), key=lambda x: x[1], reverse=True)
-        )
-        return sorted_genres
-
+        return dict(sorted(genre_scores.items(), key=lambda x: x[1], reverse=True))
 
     def compute_genre_profile_from_recs(self, recs: List[Dict]) -> Dict[str, float]:
-        """
-        Given the list returned by recommend_top_n_movies_for_user (with 'genres'
-        and 'predicted_rating'), compute a genre profile for the recommendations.
-
-        Returns a dict: {genre: score}, where score is the sum of predicted ratings
-        per genre (higher score = genre appears often and with high predicted rating).
-        """
         genre_scores: dict[str, float] = defaultdict(float)
-
         for movie in recs:
-            pred = movie.get("pred_rating", 0.0)
-            genres_str = movie.get("genre", "")
+            pred = float(movie.get("predicted_rating", 0.0))
+            genres = [g.strip() for g in movie.get("genres", "").split("|") if g.strip()]
+            for genre in genres:
+                genre_scores[genre] += pred
 
-            if not genres_str:
+        return dict(sorted(genre_scores.items(), key=lambda x: x[1], reverse=True))
+
+    def filter_recommendations(
+        self, recs: List[Dict], include_genres: list[str], year_range: tuple[int, int]
+    ) -> List[Dict]:
+        if not recs:
+            return []
+
+        min_year, max_year = year_range
+        filtered = []
+        for rec in recs:
+            title = rec.get("title", "")
+            year = self._extract_year_from_title(title)
+            if year is None or year < min_year or year > max_year:
                 continue
 
-            genres = [g.strip() for g in genres_str.split("|") if g.strip()]
+            if include_genres:
+                genres = {g.strip() for g in rec.get("genres", "").split("|") if g.strip()}
+                if not genres.intersection(set(include_genres)):
+                    continue
 
-            for g in genres:
-                genre_scores[g] += float(pred)
+            filtered.append(rec)
 
-        sorted_genres = dict(
-            sorted(genre_scores.items(), key=lambda x: x[1], reverse=True)
+        return filtered
+
+    def cold_start_recommendations(
+        self,
+        n: int = 10,
+        include_genres: list[str] | None = None,
+        year_range: tuple[int, int] | None = None,
+    ) -> List[Dict]:
+        include_genres = include_genres or []
+        if year_range is None:
+            years = self._all_movie_years()
+            year_range = (min(years), max(years)) if years else (1900, 2100)
+
+        agg = (
+            self.ratings_df.groupby("movieId")
+            .agg(avg_rating=("rating", "mean"), rating_count=("rating", "count"))
+            .reset_index()
         )
-        return sorted_genres
+
+        ranked = self.movies_df.merge(agg, on="movieId", how="left").fillna(
+            {"avg_rating": 0.0, "rating_count": 0}
+        )
+        ranked["popularity_score"] = ranked["avg_rating"] * (ranked["rating_count"] ** 0.2)
+        ranked = ranked.sort_values(
+            by=["popularity_score", "rating_count", "avg_rating"],
+            ascending=[False, False, False],
+        )
+
+        recs = [
+            {
+                "movieId": int(row.movieId),
+                "title": row.title,
+                "genres": row.genres,
+                "predicted_rating": round(float(row.avg_rating), 2),
+            }
+            for row in ranked.itertuples(index=False)
+        ]
+
+        filtered = self.filter_recommendations(recs, include_genres, year_range)
+        return filtered[:n]
+
+    def explain_recommendation(self, rec: Dict, user_genre_profile: Dict[str, float]) -> str:
+        rec_genres = [g.strip() for g in rec.get("genres", "").split("|") if g.strip()]
+        matched = [g for g in rec_genres if g in user_genre_profile]
+        if matched:
+            top_match = matched[:2]
+            return f"Matches your preference for {', '.join(top_match)}."
+        return "High predicted rating from the collaborative filtering model."
+
+    def _all_movie_years(self) -> List[int]:
+        years = []
+        for title in self.movies_df["title"].astype(str).tolist():
+            year = self._extract_year_from_title(title)
+            if year is not None:
+                years.append(year)
+        return years
 
     def similar_movies(self, movie_id: int, n: int = 10) -> list[dict]:
-        """
-        Return up to n movies that are most similar to the given movie_id,
-        using an item-based KNN model (algo must have a similarity matrix).
-        Result is a list of dicts with similarity scores.
-        """
-        # movie_id is the raw movieId from movies.csv
         try:
             inner_iid = self.trainset.to_inner_iid(movie_id)
         except ValueError:
-            # movie not present in training data
             return []
 
-        # We need a KNN-based algo with a similarity matrix
         if not hasattr(self.algo, "get_neighbors") or not hasattr(self.algo, "sim"):
             raise ValueError(
                 "similar_movies requires an item-based KNN model "
                 "with a similarity matrix (e.g. KNNBasic with user_based=False)."
             )
 
-        # Get nearest neighbors in inner-id space
         neighbor_inner_iids = self.algo.get_neighbors(inner_iid, k=n)
 
         results: list[dict] = []
@@ -167,7 +186,13 @@ class Recommender_Service:
                 }
             )
 
-        # Neighbors should already be sorted by similarity, but just in case:
         results.sort(key=lambda x: x["similarity"], reverse=True)
         return results
 
+    @staticmethod
+    def _extract_year_from_title(title: str) -> int | None:
+        if len(title) < 6:
+            return None
+        if title[-1] == ")" and title[-6] == "(" and title[-5:-1].isdigit():
+            return int(title[-5:-1])
+        return None

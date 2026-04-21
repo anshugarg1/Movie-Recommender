@@ -8,7 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = Path(os.getenv("RECSYS_DATA_DIR", PROJECT_ROOT / "data"))
 
 # Raw MovieLens files
-RAW_DATA_DIR = DATA_DIR / "ml-latest-small"/ "ml-latest-small"
+RAW_DATA_DIR = DATA_DIR / "ml-latest-small" / "ml-latest-small"
 
 MOVIES_PATH = RAW_DATA_DIR / "movies.csv"
 RATINGS_PATH = RAW_DATA_DIR / "ratings.csv"
