@@ -1,7 +1,4 @@
 import pandas as pd
-from surprise.model_selection import train_test_split
-from surprise.model_selection import cross_validate
-from surprise import Dataset, Reader
 
 def get_top_n_for_user(algo, trainset, movies_df, raw_user_id, n=10):
     """
@@ -17,7 +14,6 @@ def get_top_n_for_user(algo, trainset, movies_df, raw_user_id, n=10):
 
     # All items user has already rated (inner ids) - movie inner ids
     user_rated_inner_iids = set(j for (j, _) in trainset.ur[inner_uid])
-    print(user_rated_inner_iids)
 
     # All item (movie) inner ids
     all_inner_iids = list(trainset.all_items())
@@ -34,7 +30,6 @@ def get_top_n_for_user(algo, trainset, movies_df, raw_user_id, n=10):
         pred = algo.predict(raw_user_id, raw_iid)
         predictions.append(pred)
 
-    # print('Length prediction: ', len(predictions))
     # Sort by estimated rating, descending
     predictions.sort(key=lambda x: x.est, reverse=True)
     top_predictions = predictions[:n]
@@ -46,11 +41,14 @@ def get_top_n_for_user(algo, trainset, movies_df, raw_user_id, n=10):
         # look up title in movies_df
         title_row = movies_df.loc[movies_df['movieId'] == movie_id, 'title']
         title = title_row.iloc[0] if not title_row.empty else f"Movie {movie_id}"
+
+        genre_row = movies_df.loc[movies_df['movieId'] == movie_id, 'genres']
+        genre = genre_row.iloc[0] if not genre_row.empty else f"Movie {movie_id}"
         results.append({
             "movieId": movie_id,
             "title": title,
-            "pred_rating": round(p.est, 2)
+            "pred_rating": round(p.est, 2),
+            "genre": genre
         })
     
     return results
-

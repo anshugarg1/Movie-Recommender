@@ -21,4 +21,4 @@ def cf_svd(trainset, testset):
     algo_svd = SVD(random_state = 42)
     algo_svd.fit(trainset)
     pred_svd = algo_svd.test(testset)
-    return pred_svd, algo_svd, algo_svd
+    return pred_svd, algo_svd

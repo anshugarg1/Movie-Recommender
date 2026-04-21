@@ -25,12 +25,12 @@ class Load_Data:
         return rating_data
     
     def load_tag(self):
-        tag_data = pd.read_csv()
+        tag_data = pd.read_csv(self.tag_path)
         print(tag_data[:4])
         return tag_data
 
     def load_link(self):
-        link_data = pd.read_csv()
+        link_data = pd.read_csv(self.link_path)
         print(link_data[:4])
         return link_data
 
@@ -40,9 +40,10 @@ class Load_Data:
         trainset, testset = train_test_split(data, test_size=0.25)
         return trainset, testset
 
-
     # def create_anti_test_set(self, trainset):
     #     anti_testset = trainset.build_anti_testset()
     #     # print(anti_testset)
     #     return anti_testset
+    
+
 

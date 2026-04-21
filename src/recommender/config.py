@@ -20,3 +20,4 @@ MODELS_DIR = DATA_DIR / "models"
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
 SVD_MODEL_PATH = MODELS_DIR / "svd_model.dump"
+KNN_MODEL_PATH = MODELS_DIR / "knn_item_model.dump"
