@@ -95,7 +95,7 @@ def run_app():
     if user_rated:
         st.subheader(f"User {selected_user}: top rated movies")
         user_rated_df = pd.DataFrame(user_rated[:n_history])
-        st.dataframe(user_rated_df[["title", "genres", "rating"]], use_container_width=True)
+        st.dataframe(user_rated_df[["title", "genres", "rating"]], width="stretch")
 
         genre_profile = service.compute_genre_profile(user_rated, top_k=n_history)
         if genre_profile:
@@ -130,7 +130,7 @@ def run_app():
         recs_df = pd.DataFrame(recs)
         st.subheader("Recommended movies")
         st.dataframe(
-            recs_df[["title", "genres", "predicted_rating", "why"]], use_container_width=True
+            recs_df[["title", "genres", "predicted_rating", "why"]], width="stretch"
         )
 
         rec_genre_profile = service.compute_genre_profile_from_recs(recs)
@@ -140,7 +140,6 @@ def run_app():
                 {"genre": list(rec_genre_profile.keys()), "score": list(rec_genre_profile.values())}
             )
             st.bar_chart(rec_genre_df.set_index("genre"))
-
 
     # --- Similar Movies ---
     st.divider()
@@ -162,7 +161,7 @@ def run_app():
             else:
                 st.dataframe(
                     pd.DataFrame(similar)[["title", "genres", "similarity"]],
-                    use_container_width=True,
+                    width="stretch",
                 )
 
 
