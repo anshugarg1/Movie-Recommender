@@ -1,7 +1,14 @@
 import pandas as pd
 import streamlit as st
 
-from recommender.config import KNN_MODEL_PATH, LINKS_PATH, MOVIES_PATH, RATINGS_PATH, SVD_MODEL_PATH, TAGS_PATH
+from recommender.config import (
+    KNN_MODEL_PATH,
+    LINKS_PATH,
+    MOVIES_PATH,
+    RATINGS_PATH,
+    SVD_MODEL_PATH,
+    TAGS_PATH,
+)
 from recommender.data.loaders import Load_Data
 from recommender.models.persistence import Model_Store
 from recommender.models.training import load_svd_from_disk, train_and_save_svd
