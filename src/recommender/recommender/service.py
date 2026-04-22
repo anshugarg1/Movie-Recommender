@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import Dict, List
 
 from .top_n_recomm import get_top_n_for_user
 
@@ -52,7 +51,7 @@ class Recommender_Service:
         results.sort(key=lambda x: x["rating"], reverse=True)
         return results
 
-    def compute_genre_profile(self, user_rated: List[Dict], top_k: int) -> Dict[str, float]:
+    def compute_genre_profile(self, user_rated: list[dict], top_k: int) -> dict[str, float]:
         genre_scores: dict[str, float] = defaultdict(float)
         for movie in user_rated[:top_k]:
             rating = float(movie.get("rating", 0.0))
@@ -62,7 +61,7 @@ class Recommender_Service:
 
         return dict(sorted(genre_scores.items(), key=lambda x: x[1], reverse=True))
 
-    def compute_genre_profile_from_recs(self, recs: List[Dict]) -> Dict[str, float]:
+    def compute_genre_profile_from_recs(self, recs: list[dict]) -> dict[str, float]:
         genre_scores: dict[str, float] = defaultdict(float)
         for movie in recs:
             pred = float(movie.get("predicted_rating", 0.0))
@@ -73,8 +72,8 @@ class Recommender_Service:
         return dict(sorted(genre_scores.items(), key=lambda x: x[1], reverse=True))
 
     def filter_recommendations(
-        self, recs: List[Dict], include_genres: list[str], year_range: tuple[int, int]
-    ) -> List[Dict]:
+        self, recs: list[dict], include_genres: list[str], year_range: tuple[int, int]
+    ) -> list[dict]:
         if not recs:
             return []
 
@@ -100,7 +99,7 @@ class Recommender_Service:
         n: int = 10,
         include_genres: list[str] | None = None,
         year_range: tuple[int, int] | None = None,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         include_genres = include_genres or []
         if year_range is None:
             years = self._all_movie_years()
@@ -134,7 +133,7 @@ class Recommender_Service:
         filtered = self.filter_recommendations(recs, include_genres, year_range)
         return filtered[:n]
 
-    def explain_recommendation(self, rec: Dict, user_genre_profile: Dict[str, float]) -> str:
+    def explain_recommendation(self, rec: dict, user_genre_profile: dict[str, float]) -> str:
         rec_genres = [g.strip() for g in rec.get("genres", "").split("|") if g.strip()]
         matched = [g for g in rec_genres if g in user_genre_profile]
         if matched:
@@ -142,7 +141,7 @@ class Recommender_Service:
             return f"Matches your preference for {', '.join(top_match)}."
         return "High predicted rating from the collaborative filtering model."
 
-    def _all_movie_years(self) -> List[int]:
+    def _all_movie_years(self) -> list[int]:
         years = []
         for title in self.movies_df["title"].astype(str).tolist():
             year = self._extract_year_from_title(title)
