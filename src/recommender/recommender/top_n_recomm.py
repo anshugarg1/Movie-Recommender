@@ -13,7 +13,8 @@ def get_top_n_for_user(algo, trainset, movies_df, raw_user_id, n=10):
             continue
 
         raw_iid = trainset.to_raw_iid(inner_iid)
-        predictions.append(algo.predict(raw_user_id, raw_iid))
+        # clip=False preserves raw scores for ranking; display is capped separately
+        predictions.append(algo.predict(raw_user_id, raw_iid, clip=False))
 
     predictions.sort(key=lambda x: x.est, reverse=True)
     top_predictions = predictions[:n]
@@ -34,7 +35,7 @@ def get_top_n_for_user(algo, trainset, movies_df, raw_user_id, n=10):
             {
                 "movieId": movie_id,
                 "title": title,
-                "predicted_rating": round(float(pred.est), 2),
+                "predicted_rating": round(min(float(pred.est), 5.0), 2),
                 "genres": genres,
             }
         )
