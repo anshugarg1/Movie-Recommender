@@ -129,9 +129,7 @@ def run_app():
 
         recs_df = pd.DataFrame(recs)
         st.subheader("Recommended movies")
-        st.dataframe(
-            recs_df[["title", "genres", "predicted_rating", "why"]], width="stretch"
-        )
+        st.dataframe(recs_df[["title", "genres", "predicted_rating", "why"]], width="stretch")
 
         rec_genre_profile = service.compute_genre_profile_from_recs(recs)
         if rec_genre_profile:
